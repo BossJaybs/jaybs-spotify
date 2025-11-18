@@ -38,12 +38,16 @@ export async function GET(request: Request) {
     const songs = tracks.map(track => {
       const durationMs = track.duration_ms || 0;
       const durationSec = Math.floor(durationMs / 1000);
-      console.log(`Track: ${track.name}, duration_ms: ${durationMs}, duration_sec: ${durationSec}`);
+      console.log(`Track: ${track.name}, duration_ms: ${durationMs}, duration_sec: ${durationSec}, preview_url: ${track.preview_url}`);
+
+      // For testing, use a known working audio URL if preview is not available
+      const audioUrl = track.preview_url || "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav";
+
       return {
         id: track.id,
         title: track.name,
         duration: durationSec,
-        audio_url: track.preview_url || "",
+        audio_url: audioUrl,
         image_url: track.album.images[0]?.url || "",
         artists: {
           id: track.artists[0]?.id || "",

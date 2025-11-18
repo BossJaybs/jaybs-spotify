@@ -258,11 +258,23 @@ export function SpotifyPlayer({
 
   return (
     <div className="w-full bg-slate-800/50 border-t border-slate-700 p-4">
-      {/* Hidden audio element for preview playback */}
+      {/* Audio element for preview playback */}
       <audio
         ref={audioRef}
         onTimeUpdate={() => setPlayerState({ position: audioRef.current?.currentTime || 0 })}
         onEnded={onNext}
+        onError={(e) => {
+          console.error('Audio element error:', e);
+          setIsUsingPreview(false);
+        }}
+        onCanPlay={() => {
+          console.log('Audio can play:', song.audio_url);
+        }}
+        onLoadStart={() => {
+          console.log('Audio load start:', song.audio_url);
+        }}
+        preload="metadata"
+        style={{ display: 'none' }}
       />
 
       {/* Song Info */}
