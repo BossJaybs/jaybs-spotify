@@ -46,122 +46,165 @@ export function SpotifyPlayer({
   const [player, setPlayer] = useState<any>(null);
   const [deviceId, setDeviceId] = useState<string>("");
   const [playerState, setPlayerState] = useState<any>(null);
+  const [hasPremium, setHasPremium] = useState<boolean>(false);
+  const [isUsingPreview, setIsUsingPreview] = useState<boolean>(false);
   const scriptLoadedRef = useRef(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     if (!session?.accessToken) return;
 
-    const loadSpotifySDK = () => {
-      if (window.Spotify) {
-        initializePlayer();
-        return;
-      }
-
-      if (!scriptLoadedRef.current) {
-        scriptLoadedRef.current = true;
-        const script = document.createElement("script");
-        script.src = "https://sdk.scdn.co/spotify-player.js";
-        script.async = true;
-        document.body.appendChild(script);
-
-        window.onSpotifyWebPlaybackSDKReady = initializePlayer;
+    // Check if user has Premium
+    const checkPremiumStatus = async () => {
+      try {
+        const response = await fetch('https://api.spotify.com/v1/me', {
+          headers: {
+            'Authorization': `Bearer ${session.accessToken}`,
+          },
+        });
+        const userData = await response.json();
+        setHasPremium(userData.product === 'premium');
+      } catch (error) {
+        console.error('Error checking premium status:', error);
+        setHasPremium(false);
       }
     };
 
-    const initializePlayer = () => {
-      const spotifyPlayer = new window.Spotify.Player({
-        name: 'Spotify Clone Player',
-        getOAuthToken: (cb: (token: string) => void) => {
-          cb(session.accessToken!);
-        },
-        volume: 0.5
-      });
+    checkPremiumStatus();
 
-      spotifyPlayer.addListener('ready', ({ device_id }: { device_id: string }) => {
-        console.log('Ready with Device ID', device_id);
-        setDeviceId(device_id);
-      });
+    if (hasPremium) {
+      const loadSpotifySDK = () => {
+        if (window.Spotify) {
+          initializePlayer();
+          return;
+        }
 
-      spotifyPlayer.addListener('not_ready', ({ device_id }: { device_id: string }) => {
-        console.log('Device ID has gone offline', device_id);
-      });
+        if (!scriptLoadedRef.current) {
+          scriptLoadedRef.current = true;
+          const script = document.createElement("script");
+          script.src = "https://sdk.scdn.co/spotify-player.js";
+          script.async = true;
+          document.body.appendChild(script);
 
-      spotifyPlayer.addListener('player_state_changed', (state: any) => {
-        if (!state) return;
-        setPlayerState(state);
-        // Update parent component if needed
-      });
+          window.onSpotifyWebPlaybackSDKReady = initializePlayer;
+        }
+      };
 
-      spotifyPlayer.connect();
-      setPlayer(spotifyPlayer);
-    };
+      const initializePlayer = () => {
+        const spotifyPlayer = new window.Spotify.Player({
+          name: 'Spotify Clone Player',
+          getOAuthToken: (cb: (token: string) => void) => {
+            cb(session.accessToken!);
+          },
+          volume: 0.5
+        });
 
-    loadSpotifySDK();
+        spotifyPlayer.addListener('ready', ({ device_id }: { device_id: string }) => {
+          console.log('Ready with Device ID', device_id);
+          setDeviceId(device_id);
+        });
+
+        spotifyPlayer.addListener('not_ready', ({ device_id }: { device_id: string }) => {
+          console.log('Device ID has gone offline', device_id);
+        });
+
+        spotifyPlayer.addListener('player_state_changed', (state: any) => {
+          if (!state) return;
+          setPlayerState(state);
+        });
+
+        spotifyPlayer.connect();
+        setPlayer(spotifyPlayer);
+      };
+
+      loadSpotifySDK();
+    }
 
     return () => {
       if (player) {
         player.disconnect();
       }
     };
-  }, [session?.accessToken]);
+  }, [session?.accessToken, hasPremium]);
 
   useEffect(() => {
-    if (!player || !song) return;
+    if (!song) return;
 
-    const playSong = async () => {
-      try {
-        // Transfer playback to this device
-        await fetch(`https://api.spotify.com/v1/me/player`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${session?.accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            device_ids: [deviceId],
-            play: false,
-          }),
-        });
+    if (hasPremium && player) {
+      const playSong = async () => {
+        try {
+          // Transfer playback to this device
+          await fetch(`https://api.spotify.com/v1/me/player`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${session?.accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              device_ids: [deviceId],
+              play: false,
+            }),
+          });
 
-        // Start playback
-        await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${session?.accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            uris: [`spotify:track:${song.id}`],
-          }),
-        });
-      } catch (error) {
-        console.error('Error playing song:', error);
+          // Start playback
+          await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${session?.accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              uris: [`spotify:track:${song.id}`],
+            }),
+          });
+        } catch (error) {
+          console.error('Error playing song:', error);
+        }
+      };
+
+      if (isPlaying) {
+        playSong();
+      } else {
+        player.pause();
       }
-    };
-
-    if (isPlaying) {
-      playSong();
-    } else {
-      player.pause();
+    } else if (!hasPremium && song.audio_url) {
+      // Use preview playback for free users
+      setIsUsingPreview(true);
+      if (isPlaying) {
+        if (audioRef.current) {
+          audioRef.current.src = song.audio_url;
+          audioRef.current.play();
+        }
+      } else {
+        if (audioRef.current) {
+          audioRef.current.pause();
+        }
+      }
     }
-  }, [song, isPlaying, player, deviceId, session?.accessToken]);
+  }, [song, isPlaying, player, deviceId, session?.accessToken, hasPremium]);
 
   const handlePlayPause = () => {
-    if (player) {
+    if (hasPremium && player) {
       player.togglePlay();
+    } else if (!hasPremium && audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
     }
     onPlayPause();
   };
 
   const handleNext = () => {
-    if (player) {
+    if (hasPremium && player) {
       player.nextTrack();
     }
     onNext?.();
   };
 
   const handlePrevious = () => {
-    if (player) {
+    if (hasPremium && player) {
       player.previousTrack();
     }
     onPrevious?.();
@@ -183,12 +226,23 @@ export function SpotifyPlayer({
 
   return (
     <div className="w-full bg-slate-800/50 border-t border-slate-700 p-4">
+      {/* Hidden audio element for preview playback */}
+      <audio
+        ref={audioRef}
+        onTimeUpdate={() => setPlayerState({ position: audioRef.current?.currentTime || 0 })}
+        onEnded={onNext}
+      />
+
       {/* Song Info */}
       <div className="mb-4">
         <h3 className="text-white font-semibold truncate">{song.title}</h3>
         <p className="text-slate-400 text-sm truncate">{artistName}</p>
-        {!session?.accessToken && (
-          <p className="text-red-400 text-sm mt-1">Spotify Premium required for playback</p>
+        {hasPremium ? (
+          <p className="text-green-400 text-sm mt-1">Premium - Full track available</p>
+        ) : isUsingPreview ? (
+          <p className="text-yellow-400 text-sm mt-1">Preview - Upgrade to Premium for full tracks</p>
+        ) : (
+          <p className="text-blue-400 text-sm mt-1">Click play to hear preview</p>
         )}
       </div>
 
