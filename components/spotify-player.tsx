@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { Slider } from "@/components/ui/slider";
+import { Volume2 } from "lucide-react";
 
 declare global {
   interface Window {
@@ -49,6 +51,7 @@ export function SpotifyPlayer({
   const [playerState, setPlayerState] = useState<any>(null);
   const [hasPremium, setHasPremium] = useState<boolean>(false);
   const [isUsingPreview, setIsUsingPreview] = useState<boolean>(false);
+  const [volume, setVolume] = useState(70);
   const scriptLoadedRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -194,6 +197,20 @@ export function SpotifyPlayer({
     }
   }, [song, isPlaying, player, deviceId, session?.accessToken, hasPremium]);
 
+  useEffect(() => {
+    // Set volume for HTML5 audio (previews)
+    if (audioRef.current) {
+      audioRef.current.volume = volume / 100;
+    }
+
+    // Set volume for Spotify SDK (full tracks)
+    if (player && hasPremium) {
+      player.setVolume(volume / 100).catch(error => {
+        console.error('Error setting Spotify player volume:', error);
+      });
+    }
+  }, [volume, player, hasPremium]);
+
   const handlePlayPause = () => {
     if (hasPremium && player) {
       player.togglePlay();
@@ -280,7 +297,15 @@ export function SpotifyPlayer({
       {/* Controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {/* Volume control would go here */}
+          {/* Volume */}
+          <Volume2 className="w-4 h-4 text-slate-400" />
+          <Slider
+            value={[volume]}
+            max={100}
+            step={1}
+            onValueChange={(v) => setVolume(v[0])}
+            className="w-20"
+          />
         </div>
 
         <div className="flex items-center gap-2">
