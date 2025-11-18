@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Music, Home, Disc3, Heart, LogOut } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from 'next/navigation';
+import { useSession, signOut } from "next-auth/react";
 
 export default function DashboardLayout({
   children,
@@ -15,14 +14,27 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+    }
+  }, [status, router]);
 
   const handleLogout = async () => {
     setIsLoading(true);
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/auth/login");
+    await signOut({ callbackUrl: "/auth/login" });
   };
+
+  if (status === "loading") {
+    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  }
+
+  if (!session) {
+    return null;
+  }
 
   const navItems = [
     { href: "/dashboard", label: "Home", icon: Home },

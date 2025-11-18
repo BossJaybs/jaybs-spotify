@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MusicPlayer } from "@/components/music-player";
+import { SpotifyPlayer } from "@/components/spotify-player";
 import { SongCard } from "@/components/song-card";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
@@ -17,6 +17,7 @@ interface Song {
     id: string;
     name: string;
   };
+  artist_id: string; // For compatibility with MusicPlayer
 }
 
 interface Artist {
@@ -166,7 +167,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Player */}
-      <MusicPlayer
+      <SpotifyPlayer
         song={currentSong}
         isPlaying={isPlaying}
         onPlayPause={handlePlayPause}

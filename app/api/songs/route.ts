@@ -1,31 +1,50 @@
-import { createClient } from "@/lib/supabase/server";
+import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import SpotifyWebApi from "spotify-web-api-node";
 
 export async function GET(request: Request) {
   try {
-    const supabase = await createClient();
+    const session = await getServerSession();
+
+    if (!session?.accessToken) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const spotifyApi = new SpotifyWebApi({
+      accessToken: session.accessToken,
+    });
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
 
-    let query = supabase
-      .from("songs")
-      .select(`
-        *,
-        artists (
-          id,
-          name,
-          image_url
-        )
-      `)
-      .order("created_at", { ascending: false });
+    let tracks;
 
     if (search) {
-      query = query.or(`title.ilike.%${search}%,artists.name.ilike.%${search}%`);
+      // Search for tracks
+      const searchResult = await spotifyApi.searchTracks(search, { limit: 50 });
+      tracks = searchResult.body.tracks?.items || [];
+    } else {
+      // Get user's saved tracks
+      const savedTracks = await spotifyApi.getMySavedTracks({ limit: 50 });
+      tracks = savedTracks.body.items.map(item => item.track);
     }
 
-    const { data: songs, error } = await query;
-
-    if (error) throw error;
+    // Transform Spotify data to match our interface
+    const songs = tracks.map(track => ({
+      id: track.id,
+      title: track.name,
+      duration: Math.floor(track.duration_ms / 1000),
+      audio_url: track.preview_url || "", // Preview URL might not be available
+      image_url: track.album.images[0]?.url || "",
+      artists: {
+        id: track.artists[0]?.id || "",
+        name: track.artists[0]?.name || "Unknown Artist",
+      },
+      artist_id: track.artists[0]?.id || "",
+    }));
 
     return NextResponse.json(songs);
   } catch (error) {
