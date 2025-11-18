@@ -31,6 +31,7 @@ export interface Song {
     id: string;
     name: string;
   };
+  hasPreview?: boolean;
 }
 
 export function SpotifyPlayer({
@@ -167,7 +168,7 @@ export function SpotifyPlayer({
       } else {
         player.pause();
       }
-    } else if (!hasPremium && song.audio_url && song.audio_url.trim() !== "") {
+    } else if (!hasPremium && song.hasPreview !== false && song.audio_url && song.audio_url.trim() !== "") {
       // Use preview playback for free users
       setIsUsingPreview(true);
       console.log('Using preview playback:', song.audio_url);
@@ -186,7 +187,7 @@ export function SpotifyPlayer({
           console.log('Pausing preview playback');
         }
       }
-    } else if (!hasPremium && (!song.audio_url || song.audio_url.trim() === "")) {
+    } else if (!hasPremium && (song.hasPreview === false || !song.audio_url || song.audio_url.trim() === "")) {
       // No preview available
       setIsUsingPreview(false);
       console.log('No preview URL available for this track:', song.title);

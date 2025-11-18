@@ -18,6 +18,7 @@ interface Song {
     name: string;
   };
   artist_id: string; // For compatibility with MusicPlayer
+  hasPreview?: boolean; // Whether track has preview URL
 }
 
 interface Artist {
@@ -142,6 +143,7 @@ export default function DashboardPage() {
                 artist={song.artists?.name || "Unknown"}
                 image={song.image_url}
                 isFavorited={favorites.includes(song.id)}
+                hasPreview={song.hasPreview !== false} // Default to true for backward compatibility
                 onPlay={() => handlePlaySong(song)}
                 onFavorite={() => {
                   if (currentSong?.id === song.id) {

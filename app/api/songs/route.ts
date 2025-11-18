@@ -24,19 +24,20 @@ export async function GET(request: Request) {
     let tracks;
 
     if (search) {
-      // Search for tracks
+      // Search for tracks - show all results but mark playable ones
       const searchResult = await spotifyApi.searchTracks(search, { limit: 50 });
       tracks = searchResult.body.tracks?.items || [];
     } else {
-      // Get user's saved tracks
+      // Get user's saved tracks - only show playable ones
       const savedTracks = await spotifyApi.getMySavedTracks({ limit: 50 });
       tracks = savedTracks.body.items.map(item => item.track);
     }
 
     // Transform Spotify data to match our interface
-    const songs = tracks
-      .filter(track => track.preview_url) // Only include tracks with preview URLs
-      .map(track => ({
+    let songs;
+    if (search) {
+      // For search results, include all tracks but mark which have previews
+      songs = tracks.map(track => ({
         id: track.id,
         title: track.name,
         duration: Math.floor(track.duration_ms / 1000),
@@ -47,7 +48,26 @@ export async function GET(request: Request) {
           name: track.artists[0]?.name || "Unknown Artist",
         },
         artist_id: track.artists[0]?.id || "",
+        hasPreview: !!track.preview_url, // Mark if track has preview
       }));
+    } else {
+      // For saved tracks, only include tracks with preview URLs
+      songs = tracks
+        .filter(track => track.preview_url)
+        .map(track => ({
+          id: track.id,
+          title: track.name,
+          duration: Math.floor(track.duration_ms / 1000),
+          audio_url: track.preview_url || "",
+          image_url: track.album.images[0]?.url || "",
+          artists: {
+            id: track.artists[0]?.id || "",
+            name: track.artists[0]?.name || "Unknown Artist",
+          },
+          artist_id: track.artists[0]?.id || "",
+          hasPreview: true, // Saved tracks are filtered to have previews
+        }));
+    }
 
     return NextResponse.json(songs);
   } catch (error) {
