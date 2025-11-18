@@ -167,19 +167,29 @@ export function SpotifyPlayer({
       } else {
         player.pause();
       }
-    } else if (!hasPremium && song.audio_url) {
+    } else if (!hasPremium && song.audio_url && song.audio_url.trim() !== "") {
       // Use preview playback for free users
       setIsUsingPreview(true);
+      console.log('Using preview playback:', song.audio_url);
       if (isPlaying) {
         if (audioRef.current) {
           audioRef.current.src = song.audio_url;
-          audioRef.current.play();
+          console.log('Setting audio src and attempting to play');
+          audioRef.current.play().catch(error => {
+            console.error('Error playing preview:', error);
+            setIsUsingPreview(false);
+          });
         }
       } else {
         if (audioRef.current) {
           audioRef.current.pause();
+          console.log('Pausing preview playback');
         }
       }
+    } else if (!hasPremium && (!song.audio_url || song.audio_url.trim() === "")) {
+      // No preview available
+      setIsUsingPreview(false);
+      console.log('No preview URL available for this track:', song.title);
     }
   }, [song, isPlaying, player, deviceId, session?.accessToken, hasPremium]);
 
@@ -241,8 +251,10 @@ export function SpotifyPlayer({
           <p className="text-green-400 text-sm mt-1">Premium - Full track available</p>
         ) : isUsingPreview ? (
           <p className="text-yellow-400 text-sm mt-1">Preview - Upgrade to Premium for full tracks</p>
-        ) : (
+        ) : song.audio_url && song.audio_url.trim() !== "" ? (
           <p className="text-blue-400 text-sm mt-1">Click play to hear preview</p>
+        ) : (
+          <p className="text-red-400 text-sm mt-1">No preview available - Upgrade to Premium</p>
         )}
       </div>
 
