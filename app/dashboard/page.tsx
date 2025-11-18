@@ -112,13 +112,15 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="p-8">
         <h1 className="text-3xl font-bold text-white mb-2">Welcome to Musive</h1>
-        <p className="text-slate-400">Discover and enjoy your favorite music</p>
+        <p className="text-slate-400 mb-2">Search and play any song from Spotify</p>
+        <p className="text-sm text-green-400 mb-4">🎵 Access millions of songs • 🔍 Search any artist or track • ▶️ Play previews instantly</p>
+
         {/* Search */}
         <div className="relative mt-4 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
           <Input
             type="text"
-            placeholder="Search songs or artists..."
+            placeholder="Search for any song or artist..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 bg-slate-800 border-slate-700 text-white placeholder-slate-400"
@@ -129,10 +131,13 @@ export default function DashboardPage() {
       {/* Songs Grid */}
       <div className="flex-1 overflow-auto px-8 pb-8">
         <h2 className="text-xl font-semibold text-white mb-4">
-          {searchQuery ? `Search Results for "${searchQuery}"` : "Featured Songs"}
+          {searchQuery ? `Search Results for "${searchQuery}"` : "Your Spotify Library"}
         </h2>
         {songsLoading ? (
-          <div className="text-slate-400 text-center py-8">Loading songs...</div>
+          <div className="text-slate-400 text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+            Loading from Spotify...
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {queue.map((song) => (
