@@ -233,7 +233,11 @@ export function SpotifyPlayer({
 
   const artistName = song.artists?.name || "Unknown Artist";
   const duration = song.duration || 0;
-  const currentTime = playerState?.position || 0;
+  const currentTime = isUsingPreview
+    ? (audioRef.current?.currentTime || 0)
+    : (playerState?.position ? playerState.position / 1000 : 0); // Convert ms to seconds
+
+  console.log('Player debug:', { songTitle: song.title, duration, currentTime, isUsingPreview, playerState });
 
   return (
     <div className="w-full bg-slate-800/50 border-t border-slate-700 p-4">
@@ -265,7 +269,7 @@ export function SpotifyPlayer({
         <div className="flex-1 bg-slate-700 rounded-full h-2">
           <div
             className="bg-purple-600 h-2 rounded-full"
-            style={{ width: `${(currentTime / (duration * 1000)) * 100}%` }}
+            style={{ width: duration > 0 ? `${(currentTime / duration) * 100}%` : '0%' }}
           />
         </div>
         <span className="text-xs text-slate-400 w-10 text-right">
