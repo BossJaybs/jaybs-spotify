@@ -57,8 +57,12 @@ export function SpotifyPlayer({
 
   // Load Spotify Web Playback SDK
   useEffect(() => {
-    if (!session?.accessToken) return;
+    if (!session?.accessToken) {
+      console.log('No access token available');
+      return;
+    }
 
+    console.log('Loading Spotify Web Playback SDK');
     const script = document.createElement("script");
     script.src = "https://sdk.scdn.co/spotify-player.js";
     script.async = true;
@@ -66,9 +70,13 @@ export function SpotifyPlayer({
     document.body.appendChild(script);
 
     window.onSpotifyWebPlaybackSDKReady = () => {
+      console.log('Spotify SDK ready, initializing player');
       const player = new window.Spotify.Player({
         name: 'Spotify Clone Web Player',
-        getOAuthToken: cb => { cb(session.accessToken); },
+        getOAuthToken: cb => {
+          console.log('Providing access token to SDK');
+          cb(session.accessToken);
+        },
         volume: volume / 100
       });
 
@@ -137,8 +145,10 @@ export function SpotifyPlayer({
 
     if (hasPremium && player && song.spotifyUri) {
       // Use Spotify Web Playback SDK for full tracks
+      console.log('Attempting to play full track via SDK:', song.title, 'URI:', song.spotifyUri);
       const playSong = async () => {
         try {
+          console.log('Transferring playback to device:', deviceId);
           // Transfer playback to this device
           await fetch(`https://api.spotify.com/v1/me/player`, {
             method: 'PUT',
@@ -152,6 +162,7 @@ export function SpotifyPlayer({
             }),
           });
 
+          console.log('Starting playback on device');
           // Start playback
           await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
             method: 'PUT',
@@ -185,7 +196,7 @@ export function SpotifyPlayer({
 
   const fallbackToPreview = () => {
     setIsUsingPreview(true);
-    console.log('Using preview playback:', song?.audio_url);
+    console.log('Falling back to preview playback for:', song?.title, 'URL:', song?.audio_url);
     if (isPlaying) {
       if (audioRef.current) {
         audioRef.current.src = song?.audio_url || "";
