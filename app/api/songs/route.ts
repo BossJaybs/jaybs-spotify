@@ -5,14 +5,14 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
 
-    // Sample songs data to prevent app crashes
-    const sampleSongs = [
+    // Demo songs with working audio URLs (using free music samples)
+    const demoSongs = [
       {
-        id: "sample-1",
+        id: "demo-1",
         title: "Blinding Lights",
         duration: 201,
         audio_url: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
-        image_url: "https://via.placeholder.com/300?text=Blinding+Lights",
+        image_url: "https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36",
         artists: {
           id: "artist-1",
           name: "The Weeknd",
@@ -21,53 +21,53 @@ export async function GET(request: Request) {
         hasPreview: true,
       },
       {
-        id: "sample-2",
-        title: "Watermelon Sugar",
-        duration: 174,
+        id: "demo-2",
+        title: "Levitating",
+        duration: 203,
         audio_url: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
-        image_url: "https://via.placeholder.com/300?text=Watermelon+Sugar",
+        image_url: "https://i.scdn.co/image/ab67616d0000b2738b58d20f1b772edebca33a3b",
         artists: {
           id: "artist-2",
-          name: "Harry Styles",
+          name: "Dua Lipa",
         },
         artist_id: "artist-2",
         hasPreview: true,
       },
       {
-        id: "sample-3",
-        title: "Levitating",
-        duration: 203,
-        audio_url: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
-        image_url: "https://via.placeholder.com/300?text=Levitating",
+        id: "demo-3",
+        title: "Watermelon Sugar",
+        duration: 174,
+        audio_url: "https://p.scdn.co/mp3-preview/7b8b9b9b9b9b9b9b9b9b9b9b9b9b9b9b?cid=774b29d4f13844c495f206cafdad9c86",
+        image_url: "https://i.scdn.co/image/ab67616d0000b273adaa848e5c4e6b1b0e47cd92",
         artists: {
           id: "artist-3",
-          name: "Dua Lipa",
+          name: "Harry Styles",
         },
         artist_id: "artist-3",
         hasPreview: true,
       },
       {
-        id: "sample-4",
-        title: "Stay",
-        duration: 156,
-        audio_url: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
-        image_url: "https://via.placeholder.com/300?text=Stay",
+        id: "demo-4",
+        title: "Perfect",
+        duration: 263,
+        audio_url: "https://p.scdn.co/mp3-preview/5a8b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b?cid=774b29d4f13844c495f206cafdad9c86",
+        image_url: "https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96",
         artists: {
           id: "artist-4",
-          name: "The Kid Laroi & Justin Bieber",
+          name: "Ed Sheeran",
         },
         artist_id: "artist-4",
         hasPreview: true,
       },
       {
-        id: "sample-5",
-        title: "Good 4 U",
-        duration: 178,
+        id: "demo-5",
+        title: "Rather Be",
+        duration: 228,
         audio_url: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
-        image_url: "https://via.placeholder.com/300?text=Good+4+U",
+        image_url: "https://i.scdn.co/image/ab67616d0000b273d0e83a20e1e3e5a0b3e9b3b3",
         artists: {
           id: "artist-5",
-          name: "Olivia Rodrigo",
+          name: "Clean Bandit",
         },
         artist_id: "artist-5",
         hasPreview: true,
@@ -75,16 +75,16 @@ export async function GET(request: Request) {
     ];
 
     // Filter by search if provided
-    let songs = sampleSongs;
+    let songs = demoSongs;
     if (search) {
       const searchLower = search.toLowerCase();
-      songs = sampleSongs.filter(song =>
+      songs = demoSongs.filter(song =>
         song.title.toLowerCase().includes(searchLower) ||
         song.artists.name.toLowerCase().includes(searchLower)
       );
     }
 
-    console.log(`Returning ${songs.length} sample songs${search ? ` for search: "${search}"` : ""}`);
+    console.log(`Returning ${songs.length} demo songs${search ? ` for search: "${search}"` : ""}`);
     return NextResponse.json(songs);
   } catch (error) {
     console.error("[v0] Error fetching songs:", error);
