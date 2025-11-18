@@ -34,40 +34,20 @@ export async function GET(request: Request) {
     }
 
     // Transform Spotify data to match our interface
-    let songs;
-    if (search) {
-      // For search results, include all tracks but mark which have previews
-      songs = tracks.map(track => ({
-        id: track.id,
-        title: track.name,
-        duration: Math.floor(track.duration_ms / 1000),
-        audio_url: track.preview_url || "",
-        image_url: track.album.images[0]?.url || "",
-        artists: {
-          id: track.artists[0]?.id || "",
-          name: track.artists[0]?.name || "Unknown Artist",
-        },
-        artist_id: track.artists[0]?.id || "",
-        hasPreview: !!track.preview_url, // Mark if track has preview
-      }));
-    } else {
-      // For saved tracks, only include tracks with preview URLs
-      songs = tracks
-        .filter(track => track.preview_url)
-        .map(track => ({
-          id: track.id,
-          title: track.name,
-          duration: Math.floor(track.duration_ms / 1000),
-          audio_url: track.preview_url || "",
-          image_url: track.album.images[0]?.url || "",
-          artists: {
-            id: track.artists[0]?.id || "",
-            name: track.artists[0]?.name || "Unknown Artist",
-          },
-          artist_id: track.artists[0]?.id || "",
-          hasPreview: true, // Saved tracks are filtered to have previews
-        }));
-    }
+    // Include all tracks - the player will handle Premium vs Free logic
+    const songs = tracks.map(track => ({
+      id: track.id,
+      title: track.name,
+      duration: Math.floor(track.duration_ms / 1000),
+      audio_url: track.preview_url || "",
+      image_url: track.album.images[0]?.url || "",
+      artists: {
+        id: track.artists[0]?.id || "",
+        name: track.artists[0]?.name || "Unknown Artist",
+      },
+      artist_id: track.artists[0]?.id || "",
+      hasPreview: !!track.preview_url, // Mark if track has preview
+    }));
 
     return NextResponse.json(songs);
   } catch (error) {

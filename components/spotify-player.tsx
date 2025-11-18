@@ -168,7 +168,7 @@ export function SpotifyPlayer({
       } else {
         player.pause();
       }
-    } else if (!hasPremium && song.hasPreview !== false && song.audio_url && song.audio_url.trim() !== "") {
+    } else if (!hasPremium && song.audio_url && song.audio_url.trim() !== "") {
       // Use preview playback for free users
       setIsUsingPreview(true);
       console.log('Using preview playback:', song.audio_url);
@@ -187,10 +187,10 @@ export function SpotifyPlayer({
           console.log('Pausing preview playback');
         }
       }
-    } else if (!hasPremium && (song.hasPreview === false || !song.audio_url || song.audio_url.trim() === "")) {
-      // No preview available
+    } else if (!hasPremium) {
+      // Free user trying to play track without preview - this shouldn't happen with current filtering
       setIsUsingPreview(false);
-      console.log('No preview URL available for this track:', song.title);
+      console.log('No playback available for this track:', song.title);
     }
   }, [song, isPlaying, player, deviceId, session?.accessToken, hasPremium]);
 
@@ -249,13 +249,11 @@ export function SpotifyPlayer({
         <h3 className="text-white font-semibold truncate">{song.title}</h3>
         <p className="text-slate-400 text-sm truncate">{artistName}</p>
         {hasPremium ? (
-          <p className="text-green-400 text-sm mt-1">Premium - Full track available</p>
+          <p className="text-green-400 text-sm mt-1">Full track playing</p>
         ) : isUsingPreview ? (
-          <p className="text-yellow-400 text-sm mt-1">Preview - Upgrade to Premium for full tracks</p>
-        ) : song.audio_url && song.audio_url.trim() !== "" ? (
-          <p className="text-blue-400 text-sm mt-1">Click play to hear preview</p>
+          <p className="text-blue-400 text-sm mt-1">Preview playing (30 seconds)</p>
         ) : (
-          <p className="text-red-400 text-sm mt-1">No preview available - Upgrade to Premium</p>
+          <p className="text-gray-400 text-sm mt-1">Select a song to play</p>
         )}
       </div>
 

@@ -42,19 +42,13 @@ export function SongCard({
 
       <div className="p-4">
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-          {hasPreview ? (
-            <Button
-              size="icon"
-              className="bg-purple-600 hover:bg-purple-700"
-              onClick={onPlay}
-            >
-              <Play className="w-4 h-4 ml-0.5" />
-            </Button>
-          ) : (
-            <div className="bg-gray-600 text-white px-2 py-1 rounded text-xs font-medium">
-              Premium Only
-            </div>
-          )}
+          <Button
+            size="icon"
+            className="bg-purple-600 hover:bg-purple-700"
+            onClick={onPlay}
+          >
+            <Play className="w-4 h-4 ml-0.5" />
+          </Button>
           <Button
             size="icon"
             variant="ghost"
