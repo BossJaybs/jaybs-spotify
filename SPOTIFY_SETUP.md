@@ -14,7 +14,9 @@ To integrate Spotify Web API and Playback SDK, you need to set up a Spotify appl
 2. Fill in the app details:
    - **App name**: Your app name (e.g., "Spotify Clone")
    - **App description**: Brief description of your app
-   - **Redirect URI**: Add `http://localhost:3000/api/auth/callback/spotify` (for local development)
+   - **Redirect URI**: Add the following URIs:
+     - `http://localhost:3000/api/auth/callback/spotify` (for local development)
+     - `https://jaybspotify.vercel.app/api/auth/callback/spotify` (for production)
    - **Website**: Your website URL (optional)
 
 ## Step 3: Get Your Credentials
