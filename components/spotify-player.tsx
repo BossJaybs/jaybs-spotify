@@ -1,16 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useSession } from "next-auth/react";
 import { Slider } from "@/components/ui/slider";
 import { Volume2 } from "lucide-react";
-
-declare global {
-  interface Window {
-    onSpotifyWebPlaybackSDKReady: () => void;
-    Spotify: any;
-  }
-}
 
 export interface SpotifyPlayerProps {
   song: Song | null;
@@ -45,91 +37,57 @@ export function SpotifyPlayer({
   onFavorite,
   isFavorited = false,
 }: SpotifyPlayerProps) {
-  const { data: session } = useSession();
-  const [player, setPlayer] = useState<any>(null);
-  const [deviceId, setDeviceId] = useState<string>("");
-  const [playerState, setPlayerState] = useState<any>(null);
-  const [hasPremium, setHasPremium] = useState<boolean>(false);
-  const [isUsingPreview, setIsUsingPreview] = useState<boolean>(false);
+  const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(70);
-  const scriptLoadedRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    if (!session?.accessToken) return;
-
-    // Check if user has Premium
-    const checkPremiumStatus = async () => {
-      try {
-        const response = await fetch('https://api.spotify.com/v1/me', {
-          headers: {
-            'Authorization': `Bearer ${session.accessToken}`,
-          },
-        });
-        const userData = await response.json();
-        setHasPremium(userData.product === 'premium');
-      } catch (error) {
-        console.error('Error checking premium status:', error);
-        setHasPremium(false);
-      }
-    };
-
-    checkPremiumStatus();
-
-    if (hasPremium) {
-      const loadSpotifySDK = () => {
-        if (window.Spotify) {
-          initializePlayer();
-          return;
-        }
-
-        if (!scriptLoadedRef.current) {
-          scriptLoadedRef.current = true;
-          const script = document.createElement("script");
-          script.src = "https://sdk.scdn.co/spotify-player.js";
-          script.async = true;
-          document.body.appendChild(script);
-
-          window.onSpotifyWebPlaybackSDKReady = initializePlayer;
-        }
-      };
-
-      const initializePlayer = () => {
-        const spotifyPlayer = new window.Spotify.Player({
-          name: 'Spotify Clone Player',
-          getOAuthToken: (cb: (token: string) => void) => {
-            cb(session.accessToken!);
-          },
-          volume: 0.5
-        });
-
-        spotifyPlayer.addListener('ready', ({ device_id }: { device_id: string }) => {
-          console.log('Ready with Device ID', device_id);
-          setDeviceId(device_id);
-        });
-
-        spotifyPlayer.addListener('not_ready', ({ device_id }: { device_id: string }) => {
-          console.log('Device ID has gone offline', device_id);
-        });
-
-        spotifyPlayer.addListener('player_state_changed', (state: any) => {
-          if (!state) return;
-          setPlayerState(state);
-        });
-
-        spotifyPlayer.connect();
-        setPlayer(spotifyPlayer);
-      };
-
-      loadSpotifySDK();
+    if (audioRef.current) {
+      audioRef.current.volume = volume / 100;
     }
+  }, [volume]);
 
-    return () => {
-      if (player) {
-        player.disconnect();
+  useEffect(() => {
+    if (!song) return;
+
+    if (song.audio_url && song.audio_url.trim() !== "") {
+      if (audioRef.current) {
+        audioRef.current.src = song.audio_url;
+        audioRef.current.load();
+
+        if (isPlaying) {
+          setTimeout(() => {
+            if (audioRef.current) {
+              audioRef.current.play().catch(error => {
+                console.error('Error playing audio:', error);
+              });
+            }
+          }, 100);
+        } else {
+          audioRef.current.pause();
+        }
       }
-    };
-  }, [session?.accessToken, hasPremium]);
+    }
+  }, [song, isPlaying]);
+
+  const handlePlayPause = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+    }
+    onPlayPause();
+  };
+
+  const handleNext = () => {
+    onNext?.();
+  };
+
+  const handlePrevious = () => {
+    onPrevious?.();
+  };
 
   useEffect(() => {
     if (!song) return;
@@ -250,28 +208,16 @@ export function SpotifyPlayer({
 
   const artistName = song.artists?.name || "Unknown Artist";
   const duration = song.duration || 0;
-  const currentTime = isUsingPreview
-    ? (audioRef.current?.currentTime || 0)
-    : (playerState?.position ? playerState.position / 1000 : 0); // Convert ms to seconds
-
-  console.log('Player debug:', { songTitle: song.title, duration, currentTime, isUsingPreview, playerState });
 
   return (
     <div className="w-full bg-slate-800/50 border-t border-slate-700 p-4">
-      {/* Audio element for preview playback */}
+      {/* Hidden audio element */}
       <audio
         ref={audioRef}
-        onTimeUpdate={() => setPlayerState({ position: audioRef.current?.currentTime || 0 })}
+        onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
         onEnded={onNext}
         onError={(e) => {
           console.error('Audio element error:', e);
-          setIsUsingPreview(false);
-        }}
-        onCanPlay={() => {
-          console.log('Audio can play:', song.audio_url);
-        }}
-        onLoadStart={() => {
-          console.log('Audio load start:', song.audio_url);
         }}
         preload="metadata"
         style={{ display: 'none' }}
@@ -281,19 +227,13 @@ export function SpotifyPlayer({
       <div className="mb-4">
         <h3 className="text-white font-semibold truncate">{song.title}</h3>
         <p className="text-slate-400 text-sm truncate">{artistName}</p>
-        {hasPremium ? (
-          <p className="text-green-400 text-sm mt-1">Full track playing</p>
-        ) : isUsingPreview ? (
-          <p className="text-blue-400 text-sm mt-1">Spotify preview playing</p>
-        ) : (
-          <p className="text-gray-400 text-sm mt-1">Select a song to play</p>
-        )}
+        <p className="text-blue-400 text-sm mt-1">Sample music playing</p>
       </div>
 
-      {/* Progress Bar - Simplified for now */}
+      {/* Progress Bar */}
       <div className="flex items-center gap-2 mb-4">
         <span className="text-xs text-slate-400 w-10">
-          {formatTime(currentTime / 1000)}
+          {formatTime(currentTime)}
         </span>
         <div className="flex-1 bg-slate-700 rounded-full h-2">
           <div
