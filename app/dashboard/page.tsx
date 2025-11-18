@@ -131,8 +131,13 @@ export default function DashboardPage() {
       {/* Songs Grid */}
       <div className="flex-1 overflow-auto px-8 pb-8">
         <h2 className="text-xl font-semibold text-white mb-4">
-          {searchQuery ? `Search Results for "${searchQuery}"` : "Your Spotify Library"}
+          {searchQuery ? `Search Results for "${searchQuery}"` : "Your Music"}
         </h2>
+        {searchQuery && (
+          <p className="text-green-400 text-sm mb-4">
+            🎵 Showing real Spotify search results
+          </p>
+        )}
         {songsLoading ? (
           <div className="text-slate-400 text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
