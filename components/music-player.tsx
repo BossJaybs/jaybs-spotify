@@ -40,6 +40,7 @@ export function MusicPlayer({
   const audioRef = useRef<HTMLAudioElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(70);
+  const [audioError, setAudioError] = useState(false);
 
   useEffect(() => {
     if (!audioRef.current) return;
@@ -54,11 +55,12 @@ export function MusicPlayer({
   useEffect(() => {
     if (!audioRef.current) return;
     if (song?.audio_url) {
+      setAudioError(false);
       audioRef.current.src = song.audio_url;
       audioRef.current.currentTime = 0;
       setCurrentTime(0);
       if (isPlaying) {
-        audioRef.current.play();
+        audioRef.current.play().catch(() => setAudioError(true));
       }
     }
   }, [song]);
@@ -108,12 +110,16 @@ export function MusicPlayer({
         ref={audioRef}
         onTimeUpdate={handleTimeUpdate}
         onEnded={onNext}
+        onError={() => setAudioError(true)}
       />
 
       {/* Song Info */}
       <div className="mb-4">
         <h3 className="text-white font-semibold truncate">{song.title}</h3>
         <p className="text-slate-400 text-sm truncate">{artistName}</p>
+        {audioError && (
+          <p className="text-red-400 text-sm mt-1">Audio file not available</p>
+        )}
       </div>
 
       {/* Progress Bar */}

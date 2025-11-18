@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { MusicPlayer } from "@/components/music-player";
 import { SongCard } from "@/components/song-card";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 import useSWR from "swr";
 
 interface Song {
@@ -30,9 +32,10 @@ export default function DashboardPage() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [queue, setQueue] = useState<Song[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: songs, isLoading: songsLoading } = useSWR<Song[]>(
-    "/api/songs",
+    `/api/songs${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ""}`,
     fetcher
   );
   const { data: favoritesData } = useSWR("/api/favorites", fetcher);
@@ -108,11 +111,24 @@ export default function DashboardPage() {
       <div className="p-8">
         <h1 className="text-3xl font-bold text-white mb-2">Welcome to Musive</h1>
         <p className="text-slate-400">Discover and enjoy your favorite music</p>
+        {/* Search */}
+        <div className="relative mt-4 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+          <Input
+            type="text"
+            placeholder="Search songs or artists..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+          />
+        </div>
       </div>
 
       {/* Songs Grid */}
       <div className="flex-1 overflow-auto px-8 pb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">Featured Songs</h2>
+        <h2 className="text-xl font-semibold text-white mb-4">
+          {searchQuery ? `Search Results for "${searchQuery}"` : "Featured Songs"}
+        </h2>
         {songsLoading ? (
           <div className="text-slate-400 text-center py-8">Loading songs...</div>
         ) : (

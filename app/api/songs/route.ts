@@ -1,11 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const supabase = await createClient();
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get("search");
 
-    const { data: songs, error } = await supabase
+    let query = supabase
       .from("songs")
       .select(`
         *,
@@ -16,6 +18,12 @@ export async function GET() {
         )
       `)
       .order("created_at", { ascending: false });
+
+    if (search) {
+      query = query.or(`title.ilike.%${search}%,artists.name.ilike.%${search}%`);
+    }
+
+    const { data: songs, error } = await query;
 
     if (error) throw error;
 
