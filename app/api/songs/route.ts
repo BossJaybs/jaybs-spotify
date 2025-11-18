@@ -34,18 +34,20 @@ export async function GET(request: Request) {
     }
 
     // Transform Spotify data to match our interface
-    const songs = tracks.map(track => ({
-      id: track.id,
-      title: track.name,
-      duration: Math.floor(track.duration_ms / 1000),
-      audio_url: track.preview_url || "", // Preview URL might not be available
-      image_url: track.album.images[0]?.url || "",
-      artists: {
-        id: track.artists[0]?.id || "",
-        name: track.artists[0]?.name || "Unknown Artist",
-      },
-      artist_id: track.artists[0]?.id || "",
-    }));
+    const songs = tracks
+      .filter(track => track.preview_url) // Only include tracks with preview URLs
+      .map(track => ({
+        id: track.id,
+        title: track.name,
+        duration: Math.floor(track.duration_ms / 1000),
+        audio_url: track.preview_url || "",
+        image_url: track.album.images[0]?.url || "",
+        artists: {
+          id: track.artists[0]?.id || "",
+          name: track.artists[0]?.name || "Unknown Artist",
+        },
+        artist_id: track.artists[0]?.id || "",
+      }));
 
     return NextResponse.json(songs);
   } catch (error) {
