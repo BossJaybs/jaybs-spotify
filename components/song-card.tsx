@@ -46,6 +46,7 @@ export function SongCard({
             size="icon"
             className="bg-purple-600 hover:bg-purple-700"
             onClick={onPlay}
+            title="Play preview"
           >
             <Play className="w-4 h-4 ml-0.5" />
           </Button>

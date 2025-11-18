@@ -284,7 +284,7 @@ export function SpotifyPlayer({
         {hasPremium ? (
           <p className="text-green-400 text-sm mt-1">Full track playing</p>
         ) : isUsingPreview ? (
-          <p className="text-blue-400 text-sm mt-1">Preview playing (30 seconds)</p>
+          <p className="text-blue-400 text-sm mt-1">Spotify preview playing</p>
         ) : (
           <p className="text-gray-400 text-sm mt-1">Select a song to play</p>
         )}
